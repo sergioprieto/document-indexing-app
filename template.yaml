@@ -22,7 +22,7 @@ Resources:
     Properties:
       CodeUri: ./
       Handler: app.handler
-      Runtime: python3.9
+      Runtime: python3.12
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
