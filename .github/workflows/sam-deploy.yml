@@ -57,5 +57,6 @@ jobs:
             --capabilities CAPABILITY_IAM \
             --region ${REGION} \
             --parameter-overrides ImageUri=${ECR_IMAGE} \
+            --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
             --no-fail-on-empty-changeset \
             --no-confirm-changeset || if [ $? -eq 1 ]; then echo "No changes to deploy, ignoring exit code 1."; else exit $?; fi
