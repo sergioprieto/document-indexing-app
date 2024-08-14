@@ -59,5 +59,4 @@ jobs:
             --parameter-overrides ImageUri=${ECR_IMAGE} \
             --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
             --no-confirm-changeset \
-            --disable-rollback
-            --force-upload
+            --disable-rollback || if [ $? -eq 1 ]; then echo "No changes to deploy, ignoring exit code 1."; else exit $?; fi
