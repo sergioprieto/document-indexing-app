@@ -19,6 +19,10 @@ Resources:
       PackageType: Image
       ImageUri: !Ref ImageUri
       Role: arn:aws:iam::028642482223:role/DocumentIndexingFunctionRole
+      MemorySize: 1024 # Memory setting in MB
+      EphemeralStorage:
+        Size: 2048 # Ephemeral storage in MB
+      Timeout: 900 # Timeout setting in seconds (15 minutes)
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
@@ -60,5 +64,5 @@ Resources:
 
 Outputs:
   DocumentIndexingFunction:
-    Description: "Document Indexing Lambda Function ARN"
+    Description: Document Indexing Lambda Function ARN
     Value: !GetAtt DocumentIndexingFunction.Arn
