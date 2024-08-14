@@ -1,4 +1,4 @@
-name: Deploy SAM Application
+name: Deploy Minimal SAM Application
 
 on:
   push:
@@ -10,16 +10,14 @@ env:
   PIPELINE_USER_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   PIPELINE_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   SAM_TEMPLATE: template.yaml
-  TESTING_STACK_NAME: document-indexing-dev
+  TESTING_STACK_NAME: document-indexing-test-stack
   TESTING_PIPELINE_EXECUTION_ROLE: arn:aws:iam::028642482223:role/GithubActionsSAMDeploymentRole
-  TESTING_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::028642482223:role/CloudFormationSAMExecutionRole
-  TESTING_ARTIFACTS_BUCKET: document-indexer-sam-artifacts
   TESTING_REGION: us-east-1
   ECR_REPOSITORY: document-indexer-rep
   IMAGE_TAG: latest
 
 jobs:
-  build-and-deploy-dev:
+  build-and-deploy-minimal:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -50,7 +48,7 @@ jobs:
         with:
           use-installer: true
 
-      - name: Deploy to dev stack
+      - name: Deploy to test stack
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_IMAGE: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
@@ -58,10 +56,7 @@ jobs:
           sam deploy --stack-name ${TESTING_STACK_NAME} \
             --capabilities CAPABILITY_IAM \
             --region ${TESTING_REGION} \
-            --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides Environment=dev ImageUri=${ECR_IMAGE} \
+            --parameter-overrides ImageUri=${ECR_IMAGE} \
             --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
             --no-confirm-changeset \
             --disable-rollback
-            --role-arn arn:aws:iam::028642482223:role/DocumentIndexingFunctionRole
