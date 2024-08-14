@@ -11,12 +11,16 @@ Parameters:
     AllowedValues:
       - dev
       - prod
+  ExistingBucketName:
+    Type: String
+    Default: "sopai-sam-data-dev-028642482223"
+    Description: "Name of the existing S3 bucket to use"
 
 Resources:
   DocumentBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
+      BucketName: !Ref ExistingBucketName
 
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
