@@ -55,3 +55,4 @@ Outputs:
   DocumentBucket:
     Description: "S3 Bucket for documents"
     Value: !Ref ExistingBucketName
+
