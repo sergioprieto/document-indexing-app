@@ -10,6 +10,10 @@ Parameters:
       - dev
       - prod
 
+  ImageUri:
+    Type: String
+    Description: URI of the Docker image in ECR
+
 Globals:
   Function:
     Timeout: 900
@@ -26,7 +30,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
-      ImageUri: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+      ImageUri: !Ref ImageUri
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment

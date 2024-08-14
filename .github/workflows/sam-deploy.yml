@@ -50,20 +50,17 @@ jobs:
         with:
           use-installer: true
 
-      - run: sam build --template ${SAM_TEMPLATE} --use-container
-
       - name: Deploy to dev stack
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_IMAGE: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
         run: |
-          ECR_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
           sam deploy --stack-name ${TESTING_STACK_NAME} \
             --capabilities CAPABILITY_IAM \
             --region ${TESTING_REGION} \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
-            --parameter-overrides Environment=dev \
-            --image-repository ${ECR_REGISTRY}/${ECR_REPOSITORY} \
+            --parameter-overrides Environment=dev ImageUri=${ECR_IMAGE} \
             --no-confirm-changeset \
             --disable-rollback
