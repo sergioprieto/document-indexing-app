@@ -11,12 +11,13 @@ Parameters:
     AllowedValues:
       - dev
       - prod
-  ExistingBucketName:
-    Type: String
-    Default: "sopai-sam-data-dev-028642482223"
-    Description: "Name of the existing S3 bucket to use"
 
 Resources:
+  DocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
+
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -37,7 +38,7 @@ Resources:
       FunctionName: !GetAtt DocumentIndexingFunction.Arn
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !Sub arn:aws:s3:::${ExistingBucketName}
+      SourceArn: !GetAtt DocumentBucket.Arn
 
   DocumentIndexingFunctionS3ObjectRemovedPermission:
     Type: AWS::Lambda::Permission
@@ -45,12 +46,12 @@ Resources:
       FunctionName: !GetAtt DocumentIndexingFunction.Arn
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !Sub arn:aws:s3:::${ExistingBucketName}
+      SourceArn: !GetAtt DocumentBucket.Arn
 
   DocumentBucketNotification:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref ExistingBucketName
+      BucketName: !Ref DocumentBucket
       NotificationConfiguration:
         LambdaConfigurations:
           - Event: s3:ObjectCreated:*
@@ -65,4 +66,4 @@ Outputs:
 
   DocumentBucket:
     Description: "S3 Bucket for documents"
-    Value: !Ref ExistingBucketName
+    Value: !Ref DocumentBucket

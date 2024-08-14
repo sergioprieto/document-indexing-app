@@ -1,4 +1,4 @@
-name: Deploy Minimal SAM Application
+name: Deploy SAM Application
 
 on:
   push:
@@ -10,14 +10,14 @@ env:
   PIPELINE_USER_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   PIPELINE_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   SAM_TEMPLATE: template.yaml
-  TESTING_STACK_NAME: document-indexing-test-stack
-  TESTING_PIPELINE_EXECUTION_ROLE: arn:aws:iam::028642482223:role/GithubActionsSAMDeploymentRole
-  TESTING_REGION: us-east-1
+  STACK_NAME: document-indexing-dev
+  PIPELINE_EXECUTION_ROLE: arn:aws:iam::028642482223:role/GithubActionsSAMDeploymentRole
+  REGION: us-east-1
   ECR_REPOSITORY: document-indexer-rep
   IMAGE_TAG: latest
 
 jobs:
-  build-and-deploy-minimal:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -27,8 +27,8 @@ jobs:
         with:
           aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.TESTING_REGION }}
-          role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
+          aws-region: ${{ env.REGION }}
+          role-to-assume: ${{ env.PIPELINE_EXECUTION_ROLE }}
           role-session-name: dev-deployment
           role-duration-seconds: 3600
           role-skip-session-tagging: true
@@ -48,15 +48,14 @@ jobs:
         with:
           use-installer: true
 
-      - name: Deploy to test stack
+      - name: Deploy to production stack
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_IMAGE: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
         run: |
-          sam deploy --stack-name ${TESTING_STACK_NAME} \
+          sam deploy --stack-name ${STACK_NAME} \
             --capabilities CAPABILITY_IAM \
-            --region ${TESTING_REGION} \
+            --region ${REGION} \
             --parameter-overrides ImageUri=${ECR_IMAGE} \
-            --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
-            --no-confirm-changeset \
-            --disable-rollback || if [ $? -eq 1 ]; then echo "No changes to deploy, ignoring exit code 1."; else exit $?; fi
+            --no-fail-on-empty-changeset \
+            --no-confirm-changeset || if [ $? -eq 1 ]; then echo "No changes to deploy, ignoring exit code 1."; else exit $?; fi
