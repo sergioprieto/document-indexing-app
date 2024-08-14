@@ -21,16 +21,40 @@ Globals:
     Tracing: Active
 
 Resources:
+  # Create the S3 Bucket first, independent of other resources
   DocumentBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
 
+  # Define the IAM Role for the Lambda function
+  DocumentIndexingFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DocumentIndexingPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:aws:s3:::${DocumentBucket}/*
+
+  # Define the Lambda function without immediately attaching permissions
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
       ImageUri: !Ref ImageUri
+      Role: !GetAtt DocumentIndexingFunctionRole.Arn
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
@@ -38,27 +62,42 @@ Resources:
           PG_PORT: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_PORT:1}}'
           PG_DATABASE: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_DATABASE:1}}'
           PG_USER: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_USER:1}}'
-      Policies:
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub '/document-indexer/${Environment}/*'
-        - S3ReadPolicy:
-            BucketName: !Ref DocumentBucket
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref DocumentBucket
-            Events: s3:ObjectCreated:*
-        S3ObjectRemoved:
-          Type: S3
-          Properties:
-            Bucket: !Ref DocumentBucket
-            Events: s3:ObjectRemoved:*
+
+  # Add Lambda permissions for S3 Object Created events
+  DocumentIndexingFunctionS3ObjectCreatedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DocumentIndexingFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt DocumentBucket.Arn
+
+  # Add Lambda permissions for S3 Object Removed events
+  DocumentIndexingFunctionS3ObjectRemovedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DocumentIndexingFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt DocumentBucket.Arn
+
+  # Define the S3 Bucket Notifications separately
+  DocumentBucketNotification:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DocumentBucket
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
+          - Event: s3:ObjectRemoved:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
 
 Outputs:
   DocumentIndexingFunction:
     Description: "Document Indexing Lambda Function ARN"
     Value: !GetAtt DocumentIndexingFunction.Arn
+
   DocumentBucket:
     Description: "S3 Bucket for documents"
     Value: !Ref DocumentBucket
