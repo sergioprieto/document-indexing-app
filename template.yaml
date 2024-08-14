@@ -38,33 +38,23 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: !Sub '/document-indexer/${Environment}/*'
       Events:
-        S3Trigger:
+        S3ObjectCreated:
+          Type: S3
+          Properties:
+            Bucket: !Ref DocumentBucket
+            Events: 
+              - s3:ObjectCreated:*
+        S3ObjectRemoved:
           Type: S3
           Properties:
             Bucket: !Ref DocumentBucket
             Events:
-              - s3:ObjectCreated:*
               - s3:ObjectRemoved:*
 
   DocumentBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt DocumentIndexingFunction.Arn
-          - Event: s3:ObjectRemoved:*
-            Function: !GetAtt DocumentIndexingFunction.Arn
-
-  BucketPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: 'lambda:InvokeFunction'
-      FunctionName: !Ref DocumentIndexingFunction
-      Principal: s3.amazonaws.com
-      SourceAccount: !Ref AWS::AccountId
-      SourceArn: !GetAtt DocumentBucket.Arn
 
 Outputs:
   DocumentIndexingFunction:
