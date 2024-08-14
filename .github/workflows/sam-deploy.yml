@@ -54,9 +54,11 @@ jobs:
           ECR_IMAGE: "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
         run: |
           sam deploy --stack-name ${STACK_NAME} \
-            --capabilities CAPABILITY_IAM \
-            --region ${REGION} \
-            --parameter-overrides ImageUri=${ECR_IMAGE} \
-            --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
-            --no-fail-on-empty-changeset \
-            --no-confirm-changeset || if [ $? -eq 1 ]; then echo "No changes to deploy, ignoring exit code 1."; else exit $?; fi
+          --capabilities CAPABILITY_IAM \
+          --region ${REGION} \
+          --parameter-overrides ImageUri=${ECR_IMAGE} \
+          --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
+          --no-fail-on-empty-changeset \
+          --no-confirm-changeset \
+          --disable-rollback || if [ $? -eq 1 ]; then echo "No changes to deploy, ignoring exit code 1."; else exit $?; fi
+      
