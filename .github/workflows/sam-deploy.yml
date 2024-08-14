@@ -44,4 +44,5 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
             --parameter-overrides Environment=dev \
-            --no-resolve-s3
+            --no-resolve-s3 \
+            --no-confirm-changeset
