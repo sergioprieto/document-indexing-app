@@ -64,3 +64,4 @@ jobs:
             --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
             --no-confirm-changeset \
             --disable-rollback
+            --role-arn arn:aws:iam::028642482223:role/DocumentIndexingFunctionRole
