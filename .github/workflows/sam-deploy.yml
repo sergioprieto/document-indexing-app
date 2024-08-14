@@ -62,5 +62,6 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
             --parameter-overrides Environment=dev ImageUri=${ECR_IMAGE} \
+            --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
             --no-confirm-changeset \
             --disable-rollback
