@@ -15,17 +15,16 @@ env:
   TESTING_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::028642482223:role/CloudFormationSAMExecutionRole
   TESTING_ARTIFACTS_BUCKET: document-indexer-sam-artifacts
   TESTING_REGION: us-east-1
+  ECR_REPOSITORY: document-indexer-rep
+  IMAGE_TAG: latest
 
 jobs:
   build-and-deploy-dev:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: aws-actions/setup-sam@v2
-        with:
-          use-installer: true
-      - run: sam build --template ${SAM_TEMPLATE} --use-container
-      - name: Assume the testing pipeline user role
+      
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
@@ -35,7 +34,27 @@ jobs:
           role-session-name: dev-deployment
           role-duration-seconds: 3600
           role-skip-session-tagging: true
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - run: sam build --template ${SAM_TEMPLATE} --use-container
+
       - name: Deploy to dev stack
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           sam deploy --stack-name ${TESTING_STACK_NAME} \
             --capabilities CAPABILITY_IAM \
@@ -44,5 +63,5 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
             --parameter-overrides Environment=dev \
-            --no-resolve-s3 \
+            --image-repository ${ECR_REGISTRY}/${ECR_REPOSITORY} \
             --no-confirm-changeset

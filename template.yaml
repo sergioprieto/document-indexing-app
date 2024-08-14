@@ -25,9 +25,8 @@ Resources:
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
-      Handler: app.handler
-      Runtime: python3.12
+      PackageType: Image
+      ImageUri: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
@@ -40,24 +39,17 @@ Resources:
             ParameterName: !Sub '/document-indexer/${Environment}/*'
         - S3ReadPolicy:
             BucketName: !Ref DocumentBucket
-
-  S3ObjectCreatedPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt DocumentIndexingFunction.Arn
-      Action: lambda:InvokeFunction
-      Principal: s3.amazonaws.com
-      SourceArn: !GetAtt DocumentBucket.Arn
-      SourceAccount: !Ref AWS::AccountId
-
-  S3ObjectRemovedPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt DocumentIndexingFunction.Arn
-      Action: lambda:InvokeFunction
-      Principal: s3.amazonaws.com
-      SourceArn: !GetAtt DocumentBucket.Arn
-      SourceAccount: !Ref AWS::AccountId
+      Events:
+        S3ObjectCreated:
+          Type: S3
+          Properties:
+            Bucket: !Ref DocumentBucket
+            Events: s3:ObjectCreated:*
+        S3ObjectRemoved:
+          Type: S3
+          Properties:
+            Bucket: !Ref DocumentBucket
+            Events: s3:ObjectRemoved:*
 
 Outputs:
   DocumentIndexingFunction:
