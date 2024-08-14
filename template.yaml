@@ -5,16 +5,54 @@ Parameters:
   ImageUri:
     Type: String
     Description: URI of the Docker image in ECR
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
 
 Resources:
+  DocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
+
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
       ImageUri: !Ref ImageUri
       Role: arn:aws:iam::028642482223:role/DocumentIndexingFunctionRole
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          PG_HOST: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_HOST:1}}'
+          PG_PORT: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_PORT:1}}'
+          PG_DATABASE: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_DATABASE:1}}'
+          PG_USER: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_USER:1}}'
+
+  DocumentIndexingFunctionS3ObjectCreatedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DocumentIndexingFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt DocumentBucket.Arn
+
+  DocumentIndexingFunctionS3ObjectRemovedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DocumentIndexingFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt DocumentBucket.Arn
 
 Outputs:
   DocumentIndexingFunction:
     Description: "Document Indexing Lambda Function ARN"
     Value: !GetAtt DocumentIndexingFunction.Arn
+
+  DocumentBucket:
+    Description: "S3 Bucket for documents"
+    Value: !Ref DocumentBucket
