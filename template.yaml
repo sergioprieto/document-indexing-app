@@ -27,7 +27,7 @@ Resources:
     Properties:
       BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
 
-  # Define the IAM Role for the Lambda function
+  # Define the IAM Role for the Lambda function with added ECR permissions
   DocumentIndexingFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -47,8 +47,18 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource: !Sub arn:aws:s3:::${DocumentBucket}/*
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECR_REPOSITORY}
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
 
-  # Define the Lambda function without immediately attaching permissions
+  # Define the Lambda function
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -101,3 +111,4 @@ Outputs:
   DocumentBucket:
     Description: "S3 Bucket for documents"
     Value: !Ref DocumentBucket
+
