@@ -60,7 +60,6 @@ jobs:
             --region ${TESTING_REGION} \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
-            --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
             --parameter-overrides Environment=dev ImageUri=${ECR_IMAGE} \
             --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
             --no-confirm-changeset \

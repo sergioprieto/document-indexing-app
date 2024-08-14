@@ -17,7 +17,7 @@ Parameters:
   ECRRepositoryName:
     Type: String
     Description: Name of the ECR repository
-    Default: "document-indexer-rep"  # Default value if not passed
+    Default: "document-indexer-rep"
 
 Globals:
   Function:
@@ -26,50 +26,17 @@ Globals:
     Tracing: Active
 
 Resources:
-  # Create the S3 Bucket first, independent of other resources
   DocumentBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
 
-  # Define the IAM Role for the Lambda function with added ECR permissions
-  DocumentIndexingFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: DocumentIndexingPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                Resource: !Sub arn:aws:s3:::${DocumentBucket}/*
-              - Effect: Allow
-                Action:
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:BatchGetImage
-                  - ecr:BatchCheckLayerAvailability
-                Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepositoryName}
-              - Effect: Allow
-                Action:
-                  - ecr:GetAuthorizationToken
-                Resource: "*"
-
-  # Define the Lambda function
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
       ImageUri: !Ref ImageUri
-      Role: !GetAtt DocumentIndexingFunctionRole.Arn
+      Role: arn:aws:iam::028642482223:role/DocumentIndexingFunctionRole
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
@@ -78,7 +45,6 @@ Resources:
           PG_DATABASE: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_DATABASE:1}}'
           PG_USER: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_USER:1}}'
 
-  # Add Lambda permissions for S3 Object Created events
   DocumentIndexingFunctionS3ObjectCreatedPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -87,7 +53,6 @@ Resources:
       Principal: s3.amazonaws.com
       SourceArn: !GetAtt DocumentBucket.Arn
 
-  # Add Lambda permissions for S3 Object Removed events
   DocumentIndexingFunctionS3ObjectRemovedPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -96,7 +61,6 @@ Resources:
       Principal: s3.amazonaws.com
       SourceArn: !GetAtt DocumentBucket.Arn
 
-  # Define the S3 Bucket Notifications separately
   DocumentBucketNotification:
     Type: AWS::S3::Bucket
     Properties:
@@ -116,4 +80,3 @@ Outputs:
   DocumentBucket:
     Description: "S3 Bucket for documents"
     Value: !Ref DocumentBucket
-
