@@ -16,13 +16,22 @@ import json
 import time
 import openai
 
-# Read environment variables
-OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+ssm = boto3.client('ssm')
+def get_ssm_parameter(name, with_decryption=True):
+    response = ssm.get_parameter(Name=name, WithDecryption=with_decryption)
+    return response['Parameter']['Value']
+
+environment = os.getenv('ENVIRONMENT')
+
+# Secure parameters fetched at runtime
+OPENAI_API_KEY = get_ssm_parameter(f'/document-indexer/{environment}/OPENAI_API_KEY')
+PG_PASSWORD = get_ssm_parameter(f'/document-indexer/{environment}/PG_PASSWORD')
+
+# Other parameters
 PG_HOST = os.environ['PG_HOST']
 PG_PORT = os.environ['PG_PORT']
 PG_DATABASE = os.environ['PG_DATABASE']
 PG_USER = os.environ['PG_USER']
-PG_PASSWORD = os.environ['PG_PASSWORD']
 ASYNC_CONNECTION_STRING = f"postgresql+asyncpg://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DATABASE}"
 SCHEMA_NAME = "public"
 DEFAULT_CHUNK_SIZE = 850
