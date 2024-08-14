@@ -17,8 +17,14 @@ Globals:
     Tracing: Active
 
 Resources:
+  DocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
+
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
+    DependsOn: DocumentBucket
     Properties:
       CodeUri: ./
       Handler: app.handler
@@ -48,11 +54,6 @@ Resources:
           Properties:
             Bucket: !Ref DocumentBucket
             Events: s3:ObjectRemoved:*
-
-  DocumentBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
 
 Outputs:
   DocumentIndexingFunction:
