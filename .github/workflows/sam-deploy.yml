@@ -64,4 +64,5 @@ jobs:
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
             --parameter-overrides Environment=dev \
             --image-repository ${ECR_REGISTRY}/${ECR_REPOSITORY} \
-            --no-confirm-changeset
+            --no-confirm-changeset \
+            --disable-rollback
