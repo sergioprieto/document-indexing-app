@@ -17,6 +17,12 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
+          - Event: s3:ObjectRemoved:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
 
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
