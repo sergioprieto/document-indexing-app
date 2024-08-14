@@ -31,12 +31,12 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
-          OPENAI_API_KEY: '{{resolve:ssm-secure:/document-indexer/${Environment}/OPENAI_API_KEY:1}}'
-          PG_HOST: '{{resolve:ssm:/document-indexer/${Environment}/PG_HOST:1}}'
-          PG_PORT: '{{resolve:ssm:/document-indexer/${Environment}/PG_PORT:1}}'
-          PG_DATABASE: '{{resolve:ssm:/document-indexer/${Environment}/PG_DATABASE:1}}'
-          PG_USER: '{{resolve:ssm:/document-indexer/${Environment}/PG_USER:1}}'
-          PG_PASSWORD: '{{resolve:ssm-secure:/document-indexer/${Environment}/PG_PASSWORD:1}}'
+          OPENAI_API_KEY: !Sub '{{resolve:ssm-secure:/document-indexer/${Environment}/OPENAI_API_KEY:1}}'
+          PG_HOST: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_HOST:1}}'
+          PG_PORT: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_PORT:1}}'
+          PG_DATABASE: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_DATABASE:1}}'
+          PG_USER: !Sub '{{resolve:ssm:/document-indexer/${Environment}/PG_USER:1}}'
+          PG_PASSWORD: !Sub '{{resolve:ssm-secure:/document-indexer/${Environment}/PG_PASSWORD:1}}'
       Policies:
         - SSMParameterReadPolicy:
             ParameterName: !Sub '/document-indexer/${Environment}/*'
