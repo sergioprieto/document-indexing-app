@@ -60,3 +60,4 @@ jobs:
             --image-repository $ECR_REGISTRY/$ECR_REPOSITORY \
             --no-confirm-changeset \
             --disable-rollback
+            --force-upload
