@@ -14,6 +14,11 @@ Parameters:
     Type: String
     Description: URI of the Docker image in ECR
 
+  ECRRepositoryName:
+    Type: String
+    Description: Name of the ECR repository
+    Default: "document-indexer-rep"  # Default value if not passed
+
 Globals:
   Function:
     Timeout: 900
@@ -52,7 +57,7 @@ Resources:
                   - ecr:GetDownloadUrlForLayer
                   - ecr:BatchGetImage
                   - ecr:BatchCheckLayerAvailability
-                Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECR_REPOSITORY}
+                Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepositoryName}
               - Effect: Allow
                 Action:
                   - ecr:GetAuthorizationToken
