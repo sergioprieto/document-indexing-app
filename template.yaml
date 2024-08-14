@@ -17,11 +17,6 @@ Parameters:
     Description: "Name of the existing S3 bucket to use"
 
 Resources:
-  DocumentBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Ref ExistingBucketName
-
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -42,7 +37,7 @@ Resources:
       FunctionName: !GetAtt DocumentIndexingFunction.Arn
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !GetAtt DocumentBucket.Arn
+      SourceArn: !Sub arn:aws:s3:::${ExistingBucketName}
 
   DocumentIndexingFunctionS3ObjectRemovedPermission:
     Type: AWS::Lambda::Permission
@@ -50,7 +45,7 @@ Resources:
       FunctionName: !GetAtt DocumentIndexingFunction.Arn
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !GetAtt DocumentBucket.Arn
+      SourceArn: !Sub arn:aws:s3:::${ExistingBucketName}
 
 Outputs:
   DocumentIndexingFunction:
@@ -59,4 +54,4 @@ Outputs:
 
   DocumentBucket:
     Description: "S3 Bucket for documents"
-    Value: !Ref DocumentBucket
+    Value: !Ref ExistingBucketName
