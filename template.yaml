@@ -47,6 +47,17 @@ Resources:
       Principal: s3.amazonaws.com
       SourceArn: !Sub arn:aws:s3:::${ExistingBucketName}
 
+  DocumentBucketNotification:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ExistingBucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
+          - Event: s3:ObjectRemoved:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
+
 Outputs:
   DocumentIndexingFunction:
     Description: "Document Indexing Lambda Function ARN"
@@ -55,4 +66,3 @@ Outputs:
   DocumentBucket:
     Description: "S3 Bucket for documents"
     Value: !Ref ExistingBucketName
-
