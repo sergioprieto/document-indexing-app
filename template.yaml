@@ -33,23 +33,21 @@ Resources:
           PG_USER: '{{resolve:ssm:/document-indexer/${Environment}/PG_USER:1}}'
           PG_PASSWORD: '{{resolve:ssm-secure:/document-indexer/${Environment}/PG_PASSWORD:1}}'
       Policies:
-        - S3ReadPolicy:
-            BucketName: !Ref DocumentBucket
         - SSMParameterReadPolicy:
             ParameterName: !Sub '/document-indexer/${Environment}/*'
+        - S3ReadPolicy:
+            BucketName: !Ref DocumentBucket
       Events:
         S3ObjectCreated:
           Type: S3
           Properties:
             Bucket: !Ref DocumentBucket
-            Events: 
-              - s3:ObjectCreated:*
+            Events: s3:ObjectCreated:*
         S3ObjectRemoved:
           Type: S3
           Properties:
             Bucket: !Ref DocumentBucket
-            Events:
-              - s3:ObjectRemoved:*
+            Events: s3:ObjectRemoved:*
 
   DocumentBucket:
     Type: AWS::S3::Bucket
