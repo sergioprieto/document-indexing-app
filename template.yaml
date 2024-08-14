@@ -13,17 +13,6 @@ Parameters:
       - prod
 
 Resources:
-  DocumentBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub 'sopai-sam-data-${Environment}-${AWS::AccountId}'
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt DocumentIndexingFunction.Arn
-          - Event: s3:ObjectRemoved:*
-            Function: !GetAtt DocumentIndexingFunction.Arn
-
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -44,7 +33,7 @@ Resources:
       FunctionName: !GetAtt DocumentIndexingFunction.Arn
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !GetAtt DocumentBucket.Arn
+      SourceArn: arn:aws:s3:::sopai-sam-data-dev-028642482223
 
   DocumentIndexingFunctionS3ObjectRemovedPermission:
     Type: AWS::Lambda::Permission
@@ -52,13 +41,24 @@ Resources:
       FunctionName: !GetAtt DocumentIndexingFunction.Arn
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !GetAtt DocumentBucket.Arn
+      SourceArn: arn:aws:s3:::sopai-sam-data-dev-028642482223
+
+  DocumentBucketNotification:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: sopai-sam-data-dev-028642482223
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
+          - Event: s3:ObjectRemoved:*
+            Function: !GetAtt DocumentIndexingFunction.Arn
+    DependsOn:
+      - DocumentIndexingFunction
+      - DocumentIndexingFunctionS3ObjectCreatedPermission
+      - DocumentIndexingFunctionS3ObjectRemovedPermission
 
 Outputs:
   DocumentIndexingFunction:
     Description: "Document Indexing Lambda Function ARN"
     Value: !GetAtt DocumentIndexingFunction.Arn
-
-  DocumentBucket:
-    Description: "S3 Bucket for documents"
-    Value: !Ref DocumentBucket
