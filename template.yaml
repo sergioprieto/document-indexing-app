@@ -24,7 +24,6 @@ Resources:
 
   DocumentIndexingFunction:
     Type: AWS::Serverless::Function
-    DependsOn: DocumentBucket
     Properties:
       CodeUri: ./
       Handler: app.handler
@@ -43,17 +42,24 @@ Resources:
             ParameterName: !Sub '/document-indexer/${Environment}/*'
         - S3ReadPolicy:
             BucketName: !Ref DocumentBucket
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref DocumentBucket
-            Events: s3:ObjectCreated:*
-        S3ObjectRemoved:
-          Type: S3
-          Properties:
-            Bucket: !Ref DocumentBucket
-            Events: s3:ObjectRemoved:*
+
+  S3ObjectCreatedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DocumentIndexingFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt DocumentBucket.Arn
+      SourceAccount: !Ref AWS::AccountId
+
+  S3ObjectRemovedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DocumentIndexingFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt DocumentBucket.Arn
+      SourceAccount: !Ref AWS::AccountId
 
 Outputs:
   DocumentIndexingFunction:
