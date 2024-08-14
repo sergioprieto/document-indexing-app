@@ -13,7 +13,7 @@ lint = true
 
 [default.deploy.parameters]
 stack_name = "document-indexing-app"
-resolve_s3 = true
+# resolve_s3 = true  # Comment out or remove this line
 s3_prefix = "document-indexing-app"
 region = "us-east-1"
 confirm_changeset = true
@@ -21,7 +21,7 @@ capabilities = "CAPABILITY_IAM"
 parameter_overrides = "Environment=\"dev\""
 
 [default.package.parameters]
-resolve_s3 = true
+# resolve_s3 = true  # Comment out or remove this line
 
 [default.sync.parameters]
 watch = true
